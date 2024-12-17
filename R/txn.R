@@ -30,7 +30,17 @@ read_fidelity_txn <- function(filepath){
   fidelity_txn |>
     dplyr::mutate(
       across(c(run_date, settlement_date), ~lubridate::mdy(.x)),
-      across(c(quantity, price, commission, fees, accrued_interest, amount, cash_balance), ~suppressWarnings(as.double(.x)))
+      across(c(quantity, price, commission, fees, accrued_interest, amount, cash_balance), ~suppressWarnings(as.double(.x))),
+      across(where(is.character), ~dplyr::na_if(stringr::str_trim(.x), '')),
+      description = na_if(description, 'No Description')
     )
+
+}
+
+standardize_fidelity_txn <- function(fidelity_txn){
+
+  fidelity_txn |>
+    dplyr::select(run_date, action, amount) |>
+    dplyr::rename(date = run_date, description = action)
 
 }
