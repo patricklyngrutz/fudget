@@ -20,7 +20,17 @@ read_fidelity_txn <- function(filepath){
   fidelity_txn <- fidelity_txn |>
     stringr::str_sub(fidelity_txn_clip_top + 1, fidelity_txn_clip_bottom - 2)
 
-  read.table(text = fidelity_txn, sep = ',', header = T) |>
+  fidelity_txn <- read.table(text = fidelity_txn, sep = ',', header = T) |>
     dplyr::rename_with(~snakecase::to_snake_case(.x))
+
+  if (!identical(colnames(fidelity_txn), c('run_date','action','symbol','description','type','quantity','price','commission','fees','accrued_interest','amount','cash_balance','settlement_date'))){
+    logger::log_error('{filepath} column names do not match format'); stop()
+  }
+
+  fidelity_txn |>
+    dplyr::mutate(
+      across(c(run_date, settlement_date), ~lubridate::mdy(.x)),
+      across(c(quantity, price, commission, fees, accrued_interest, amount, cash_balance), ~suppressWarnings(as.double(.x)))
+    )
 
 }
